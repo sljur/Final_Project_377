@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFF">
+
+    <!-- Weather Icon/Image -->
+    <ImageView
+        android:id="@+id/weatherImage"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:scaleType="centerInside"
+        android:contentDescription="Weather Image"
+        android:layout_alignParentTop="true" />
+
+    <!-- Forecast List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/weatherRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_below="@id/weatherImage"
+        android:layout_above="@+id/backButton"
+        android:padding="16dp"
+        android:clipToPadding="false" />
+
+    <!-- Back Button -->
+    <Button
+        android:id="@+id/backButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Back to City Search"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="16dp" />
+</RelativeLayout>
