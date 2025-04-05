@@ -28,18 +28,20 @@ class WeatherAdapter(private val weatherList: List<WeatherData>) :
 
     override fun onBindViewHolder(holder: WeatherViewHolder, position: Int) {
         val weather = weatherList[position]
-        holder.dateText.text = weather.date
+
+        // Show "Day0", "Day1", etc. instead of the date
+        holder.dateText.text = "Day$position" // This will display 'Day0', 'Day1', etc.
+
         holder.weatherDescription.text = "${weather.condition}, ${weather.temperature}°F"
 
         // Change the icon dynamically based on weather condition
         val iconRes = when (weather.condition.lowercase()) {
-            "sunny" -> R.drawable.ic_sun      // We need imges for ic_sun and etc.
+            "sunny" -> R.drawable.ic_sun
             "cloudy" -> R.drawable.ic_cloud
             "rainy" -> R.drawable.ic_rain
             else -> R.drawable.ic_unknown // Fallback icon
-         // holder.weatherIcon.setImageResource(R.drawable.ic_placeholder) // default Add one image
-
         }
+
         holder.weatherIcon.setImageResource(iconRes)
     }
 
@@ -72,7 +74,9 @@ class WeatherActivity : AppCompatActivity() {
         val recyclerView = findViewById<RecyclerView>(R.id.weatherRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = WeatherAdapter(weatherList)
+
     }
 }
 
 data class WeatherData(val date: String, val condition: String, val temperature: Int)
+
