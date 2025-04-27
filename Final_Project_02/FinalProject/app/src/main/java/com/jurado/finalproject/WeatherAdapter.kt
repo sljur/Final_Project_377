@@ -1,5 +1,6 @@
 package com.jurado.finalproject
 
+import android.icu.util.Calendar
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -15,6 +16,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 // Adapter for displaying a list of weather data in a RecyclerView
 class WeatherAdapter(private val weatherList: List<WeatherData>) :
@@ -36,10 +39,28 @@ class WeatherAdapter(private val weatherList: List<WeatherData>) :
     // Display the data at the specified position
     override fun onBindViewHolder(holder: WeatherViewHolder, position: Int) {
         val weather = weatherList[position]
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("EEEE", Locale.getDefault())
+        try {
+            // Parse the date string
+            val date = inputFormat.parse(weather.date)
+            if (date != null) {
+                val calendar = Calendar.getInstance()
+                calendar.time = date
 
-        // Show "Day0", "Day1", etc. instead of the date
-        holder.dateText.text = "Day$position" // This will display 'Day0', 'Day1', etc.
+                // Format the date to get the day of the week
+                val dayOfWeek = outputFormat.format(calendar.time)
 
+                // Set the day of the week in the TextView.
+                holder.dateText.text = dayOfWeek
+            } else {
+                holder.dateText.text = "Invalid Date"
+            }
+        } catch (e: Exception) {
+            holder.dateText.text = "Error"
+        }
+
+        // Show weather condition and temperature
         holder.weatherDescription.text = "${weather.condition}, ${weather.temperature}°F"
 
         // Change the icon dynamically based on weather condition
