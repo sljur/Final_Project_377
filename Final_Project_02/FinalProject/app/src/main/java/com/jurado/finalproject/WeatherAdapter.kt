@@ -68,6 +68,9 @@ class WeatherAdapter(private val weatherList: List<WeatherData>) :
             "sunny" -> R.drawable.ic_sun
             "cloudy" -> R.drawable.ic_cloud
             "rainy" -> R.drawable.ic_rain
+            "drizzle" -> R.drawable.ic_rain
+            "foggy" -> R.drawable.ic_rain
+            "snow showers" -> R.drawable.ic_snow
             else -> R.drawable.ic_unknown
         }
 
