@@ -23,7 +23,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Add WeatherActivity here -->
         <activity android:name=".WeatherActivity" />
         <activity android:name=".ui.FavoritesActivity"/>
 

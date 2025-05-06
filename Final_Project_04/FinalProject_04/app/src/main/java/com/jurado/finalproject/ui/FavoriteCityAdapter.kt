@@ -3,46 +3,56 @@ package com.jurado.finalproject.ui
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.jurado.finalproject.R
 import com.jurado.finalproject.data.FavoriteCity
 
+// Adapter for displaying favorite cities in a RecyclerView
 class FavoriteCityAdapter(
-    private var cityList: List<FavoriteCity>,
-    private val onCityClick: (FavoriteCity) -> Unit
-) : RecyclerView.Adapter<FavoriteCityAdapter.CityViewHolder>() {
+    private val onRemoveClick: (FavoriteCity) -> Unit,
+    private val onItemClick: (FavoriteCity) -> Unit
+) : ListAdapter<FavoriteCity, FavoriteCityAdapter.FavoriteCityViewHolder>(FavoriteCityDiffCallback()) {
 
-
-    class CityViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val cityNameTextView: TextView = itemView.findViewById(R.id.cityNameTextView)
-
-        fun bind(city: FavoriteCity, onCityClick: (FavoriteCity) -> Unit) {
-            cityNameTextView.text = city.cityName
-            itemView.setOnClickListener {
-                onCityClick(city)
-            }
-        }
+    // ViewHolder for each item in the RecyclerView
+    class FavoriteCityViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val cityNameTextView: TextView = view.findViewById(R.id.cityNameTextView)
+        val removeCityButton: Button = view.findViewById(R.id.removeCityButton)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CityViewHolder {
+    // Creates new ViewHolders for the RecyclerView
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FavoriteCityViewHolder {
+        // Inflates the layout for a single favorite city item
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_favorite_city, parent, false)
-        return CityViewHolder(view)
+        return FavoriteCityViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: CityViewHolder, position: Int) {
-        val city = cityList[position]
-        holder.bind(city, onCityClick)
-    }
+    // Binds data to the ViewHolder at the specified position
+    override fun onBindViewHolder(holder: FavoriteCityViewHolder, position: Int) {
+        val favoriteCity = getItem(position)
+        holder.cityNameTextView.text = favoriteCity.cityName
 
-    override fun getItemCount(): Int = cityList.size
+        holder.removeCityButton.setOnClickListener {
+            onRemoveClick(favoriteCity)
+        }
 
-    // Method to update data
-    fun updateData(newCityList: List<FavoriteCity>) {
-        cityList = newCityList
-        notifyDataSetChanged() // Notify the adapter that the data has changed
+        holder.itemView.setOnClickListener {
+            onItemClick(favoriteCity)
+        }
     }
 }
 
+// Check for duplicates in the list
+class FavoriteCityDiffCallback : DiffUtil.ItemCallback<FavoriteCity>() {
+    override fun areItemsTheSame(oldItem: FavoriteCity, newItem: FavoriteCity): Boolean {
+        return oldItem.id == newItem.id
+    }
 
+    override fun areContentsTheSame(oldItem: FavoriteCity, newItem: FavoriteCity): Boolean {
+        return oldItem == newItem
+    }
+}

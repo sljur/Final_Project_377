@@ -6,6 +6,7 @@
     android:padding="12dp"
     tools:context=".ui.FavoriteCityAdapter">
 
+    <!-- Display the city name -->
     <TextView
         android:id="@+id/cityNameTextView"
         android:layout_width="0dp"
@@ -17,6 +18,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>
 
+    <!-- Button to remove the city from favorites -->
     <Button
         android:id="@+id/removeCityButton"
         android:layout_width="wrap_content"
