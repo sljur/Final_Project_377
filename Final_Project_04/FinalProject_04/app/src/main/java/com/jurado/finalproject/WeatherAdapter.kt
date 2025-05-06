@@ -1,0 +1,171 @@
+package com.jurado.finalproject
+
+import android.icu.util.Calendar
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import android.widget.Button
+import com.jurado.finalproject.network.RetrofitClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Locale
+
+// Adapter for displaying a list of weather data in a RecyclerView
+class WeatherAdapter(private val weatherList: List<WeatherData>) :
+    RecyclerView.Adapter<WeatherAdapter.WeatherViewHolder>() {
+
+    // ViewHolder for a single weather item
+    class WeatherViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val dateText: TextView = view.findViewById(R.id.dateText)
+        val weatherDescription: TextView = view.findViewById(R.id.weatherDescription)
+        val weatherIcon: ImageView = view.findViewById(R.id.weatherIcon)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WeatherViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_weather, parent, false)
+        return WeatherViewHolder(view)
+    }
+
+    // Display the data at the specified position
+    override fun onBindViewHolder(holder: WeatherViewHolder, position: Int) {
+        val weather = weatherList[position]
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("EEEE", Locale.getDefault())
+        try {
+            // Parse the date string
+            val date = inputFormat.parse(weather.date)
+            if (date != null) {
+                val calendar = Calendar.getInstance()
+                calendar.time = date
+
+                // Format the date to get the day of the week
+                val dayOfWeek = outputFormat.format(calendar.time)
+
+                // Set the day of the week in the TextView.
+                holder.dateText.text = dayOfWeek
+            } else {
+                holder.dateText.text = "Invalid Date"
+            }
+        } catch (e: Exception) {
+            holder.dateText.text = "Error"
+        }
+
+        // Show weather condition and temperature
+        holder.weatherDescription.text = "${weather.condition}, ${weather.temperature}°F"
+
+        // Change the icon dynamically based on weather condition
+        val iconRes = when (weather.condition.lowercase()) {
+            "sunny" -> R.drawable.ic_sun
+            "cloudy" -> R.drawable.ic_cloud
+            "rainy" -> R.drawable.ic_rain
+            "drizzle" -> R.drawable.ic_rain
+            "foggy" -> R.drawable.ic_rain
+            "snow showers" -> R.drawable.ic_snow
+            "snowy" -> R.drawable.ic_snow
+            else -> R.drawable.ic_unknown
+        }
+
+        // Set the weather icon
+        holder.weatherIcon.setImageResource(iconRes)
+    }
+
+    override fun getItemCount(): Int = weatherList.size
+}
+
+// Activity for displaying the weather forecast
+class WeatherActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_weather)
+
+        val cityName = intent.getStringExtra("city_name") ?: "Unknown"
+        val latitude = intent.getDoubleExtra("latitude", 0.0)
+        val longitude = intent.getDoubleExtra("longitude", 0.0)
+
+        // Initialize UI components
+        val weatherImage = findViewById<ImageView>(R.id.weatherImage)
+        val recyclerView = findViewById<RecyclerView>(R.id.weatherRecyclerView)
+        val backButton = findViewById<Button>(R.id.backButton)
+        val cityTextView = findViewById<TextView>(R.id.cityTextView)
+
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        cityTextView.text = cityName  // Set the city name
+
+        backButton.setOnClickListener {
+            finish()  // Finish activity on back press
+        }
+
+        // Fetch the weather forecast using the coordinates
+        fetchWeatherForecast(latitude, longitude, recyclerView, weatherImage)
+    }
+
+    private fun fetchWeatherForecast(latitude: Double, longitude: Double, recyclerView: RecyclerView, weatherImage: ImageView) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = RetrofitClient.forecastService.getForecast(latitude, longitude)
+                if (response.isSuccessful) {
+                    val forecastResponse = response.body()
+                    if (forecastResponse != null) {
+                        val weatherList = forecastResponse.daily.time.mapIndexed { index, time ->
+                            val condition = getWeatherCondition(forecastResponse.daily.weathercode[index])
+                            WeatherData(
+                                date = time,
+                                condition = condition,
+                                temperature = forecastResponse.daily.temperature_2m_max[index].toInt()
+                            )
+                        }
+
+                        withContext(Dispatchers.Main) {
+                            val firstWeatherCondition = weatherList.firstOrNull()?.condition ?: "unknown"
+                            val iconRes = when (firstWeatherCondition.lowercase()) {
+                                "sunny" -> R.drawable.ic_sun
+                                "cloudy" -> R.drawable.ic_cloud
+                                "rainy" -> R.drawable.ic_rain
+                                else -> R.drawable.ic_unknown
+                            }
+                            weatherImage.setImageResource(iconRes)
+                            recyclerView.adapter = WeatherAdapter(weatherList)
+                        }
+                    }
+                } else {
+                    // Handle API call error
+                    println("Error: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                // Handle exception
+                println("Exception: ${e.message}")
+            }
+        }
+    }
+
+    private fun getWeatherCondition(weatherCode: Int): String {
+        return when (weatherCode) {
+            0 -> "Sunny"
+            1, 2, 3 -> "Cloudy"
+            45, 48 -> "Foggy"
+            51, 53, 55 -> "Drizzle"
+            56, 57 -> "Freezing Drizzle"
+            61, 63, 65 -> "Rainy"
+            66, 67 -> "Freezing Rain"
+            71, 73, 75 -> "Snowy"
+            77 -> "Snow Grains"
+            80, 81, 82 -> "Rain Showers"
+            85, 86 -> "Snow Showers"
+            95 -> "Thunderstorm"
+            96, 99 -> "Thunderstorm with Hail"
+            else -> "Unknown"
+        }
+    }
+}
+
+data class WeatherData(val date: String, val condition: String, val temperature: Int)
